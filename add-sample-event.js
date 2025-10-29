@@ -30,7 +30,7 @@ async function addSampleEvent() {
             location: 'Centro de Convenções - São Paulo',
             price: 150.00,
             capacity: 50,
-            image_url: 'https://via.placeholder.com/400x300?text=Workshop+Nutricao'
+            image_url: '/images/default-event.svg'
         };
 
         const { data, error } = await supabase

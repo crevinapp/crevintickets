@@ -323,6 +323,9 @@ export const EventsManagement = () => {
                     onChange={(e) => setEditingEvent({ ...editingEvent, date: e.target.value })}
                     required
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Formato: Dia/Mês/Ano Hora:Minuto
+                  </p>
                 </div>
               </div>
 

@@ -11,6 +11,7 @@ import { Calendar, MapPin, Users, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
+import { generatePixData } from "@/lib/pix";
 
 const EventDetail = () => {
   const { id } = useParams();
@@ -51,23 +52,37 @@ const EventDetail = () => {
     setIsProcessing(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke("create-order", {
-        body: {
-          eventId: event.id,
-          buyerName,
-          buyerEmail,
-          quantity,
-        },
-      });
+      // Calculate total amount
+      const totalAmount = event.price * quantity;
+      
+      // Generate PIX data
+      const pixData = await generatePixData(totalAmount, event.title);
+      
+      // Create order in database
+      const { data: orderData, error: orderError } = await supabase
+        .from('orders')
+        .insert({
+          event_id: event.id,
+          buyer_name: buyerName,
+          buyer_email: buyerEmail,
+          quantity: quantity,
+          total_amount: totalAmount,
+          pix_payload: pixData.pixPayload,
+          pix_qr_dataurl: pixData.qrCodeDataUrl,
+          pix_txid: pixData.txid,
+          status: 'pending'
+        })
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (orderError) throw orderError;
 
       toast({
         title: "Pedido criado!",
         description: "Aguardando pagamento...",
       });
 
-      navigate(`/checkout/${data.orderId}`);
+      navigate(`/checkout/${orderData.id}`);
     } catch (error) {
       console.error("Error creating order:", error);
       toast({

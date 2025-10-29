@@ -6,7 +6,7 @@ import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Loader2, CheckCircle, Copy } from "lucide-react";
+import { Loader2, CheckCircle, Copy, MessageCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const Checkout = () => {
@@ -43,6 +43,24 @@ const Checkout = () => {
       });
       setTimeout(() => setCopied(false), 2000);
     }
+  };
+
+  const handleSendWhatsApp = () => {
+    const whatsappNumber = "5561996710018"; // Número da Crevin com código do país
+    
+    // Sanitizando o título do evento para evitar caracteres problemáticos
+    const eventTitle = order?.events?.title?.replace(/[^\w\s]/g, '') || 'evento';
+    
+    const message = encodeURIComponent(
+      `Olá! Acabei de efetuar o pagamento PIX para o evento "${eventTitle}". Segue o comprovante de pagamento.`
+    );
+    
+    const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${message}`;
+    
+    // Log para debug
+    console.log('WhatsApp URL:', whatsappUrl);
+    
+    window.open(whatsappUrl, '_blank');
   };
 
   if (isLoading) {
@@ -126,6 +144,18 @@ const Checkout = () => {
           <Card className="p-6">
             <h2 className="text-xl font-bold mb-4 text-center">PIX QR Code</h2>
             
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+              <p className="text-sm text-yellow-800 text-center">
+                <strong>Atenção:</strong> Este QR Code PIX não possui valor fixo. 
+                Você deve inserir o valor de <strong>
+                  {new Intl.NumberFormat('pt-BR', {
+                    style: 'currency',
+                    currency: 'BRL',
+                  }).format(Number(order.amount))}
+                </strong> no momento do pagamento.
+              </p>
+            </div>
+            
             {order.pix_qr_dataurl && (
               <div className="flex justify-center mb-6">
                 <img 
@@ -164,6 +194,32 @@ const Checkout = () => {
               <div className="text-center text-sm text-muted-foreground">
                 <p>Aguardando confirmação do pagamento...</p>
                 <p className="mt-2">Esta página será atualizada automaticamente</p>
+              </div>
+
+              {/* Botão de confirmação de pagamento e WhatsApp */}
+              <div className="mt-6 pt-6 border-t">
+                <div className="text-center mb-4">
+                  <h3 className="text-lg font-semibold mb-2">Já efetuou o pagamento?</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Envie o comprovante para a Crevin via WhatsApp
+                  </p>
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                    <p className="text-sm text-blue-800">
+                      <strong>WhatsApp da Crevin:</strong> 61 99671-0018
+                    </p>
+                    <p className="text-xs text-blue-600 mt-1">
+                      Envie a mensagem "comprovante de pagamento" junto com a foto do comprovante
+                    </p>
+                  </div>
+                  <Button 
+                    onClick={handleSendWhatsApp}
+                    className="w-full bg-green-600 hover:bg-green-700 text-white"
+                    size="lg"
+                  >
+                    <MessageCircle className="h-5 w-5 mr-2" />
+                    Enviar Comprovante via WhatsApp
+                  </Button>
+                </div>
               </div>
             </div>
           </Card>

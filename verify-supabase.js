@@ -70,7 +70,7 @@ async function verificarSupabase() {
         location: 'Local de Teste',
         price: 50.00,
         capacity: 100,
-        image_url: 'https://via.placeholder.com/400x300'
+        image_url: '/images/default-event.svg'
       })
       .select()
       .single();

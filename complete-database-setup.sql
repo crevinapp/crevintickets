@@ -178,7 +178,7 @@ VALUES (
   'Arena Central - São Paulo, SP',
   85.00,
   500,
-  'https://via.placeholder.com/400x300/1a1a1a/ffffff?text=Show+de+Rock'
+  '/images/rock-show.svg'
 )
 ON CONFLICT DO NOTHING;
 
@@ -190,7 +190,7 @@ VALUES (
   'Clube Eletrônico - Rio de Janeiro, RJ',
   120.00,
   1000,
-  'https://via.placeholder.com/400x300/6366f1/ffffff?text=Festival+Eletrônico'
+  '/images/electronic-festival.svg'
 )
 ON CONFLICT DO NOTHING;
 
@@ -202,7 +202,7 @@ VALUES (
   'Teatro do Humor - Belo Horizonte, MG',
   45.00,
   200,
-  'https://via.placeholder.com/400x300/f59e0b/ffffff?text=Stand-up+Comedy'
+  '/images/comedy-show.svg'
 )
 ON CONFLICT DO NOTHING;
 

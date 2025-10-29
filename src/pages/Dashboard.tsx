@@ -21,18 +21,21 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Loader2, LogOut, CheckCircle2, Users, DollarSign, Calendar, Plus } from "lucide-react";
+import { Loader2, LogOut, CheckCircle2, Users, DollarSign, Calendar, Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CreateEventForm } from "@/components/CreateEventForm";
 import { EventsManagement } from "@/components/EventsManagement";
+import { TicketGenerator } from "@/components/TicketGenerator";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedTicket, setSelectedTicket] = useState<any>(null);
+  const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
   const [isCreateEventOpen, setIsCreateEventOpen] = useState(false);
 
   useEffect(() => {
@@ -128,6 +131,90 @@ const Dashboard = () => {
     });
   };
 
+  const handleCancelOrder = async (orderId: string) => {
+    const { error } = await supabase
+      .from("orders")
+      .update({ status: "cancelled" })
+      .eq("id", orderId);
+
+    if (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível cancelar o pedido",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Pedido cancelado!",
+      description: "O pedido foi cancelado com sucesso",
+    });
+  };
+
+  const handleDeleteOrder = async (orderId: string) => {
+    if (!confirm("Tem certeza que deseja excluir este pedido? Esta ação não pode ser desfeita.")) {
+      return;
+    }
+
+    const { error } = await supabase
+      .from("orders")
+      .delete()
+      .eq("id", orderId);
+
+    if (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível excluir o pedido",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Pedido excluído!",
+      description: "O pedido foi excluído permanentemente",
+    });
+  };
+
+  const handleGenerateTicket = async (order: any) => {
+    try {
+      // Gerar código consistente baseado no ID do pedido
+      // Usar o ID do pedido para criar um código único e consistente
+      const orderId = order.id || '';
+      const ticketCode = `${String(orderId).padStart(9, '0')}`;
+      
+      // Criar dados do ingresso com informações reais do evento
+      const ticketData = {
+        eventName: order.events?.title || order.events?.name || 'Evento não informado',
+        eventDate: order.events?.date ? format(new Date(order.events.date), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }) : 'Data não informada',
+        eventLocation: order.events?.location || 'Local não informado',
+        buyerName: order.buyer_name || 'Nome não informado',
+        ticketCode: ticketCode,
+        quantity: order.quantity || 1,
+        ticketType: 'Inteira',
+        qrCodeData: `https://crevintickets.vercel.app/verify/${ticketCode}`,
+        orderId: order.id || null
+      };
+
+      // Definir os dados do ingresso selecionado e abrir o modal
+      setSelectedTicket(ticketData);
+      setIsTicketModalOpen(true);
+
+      toast({
+        title: "Ingresso preparado!",
+        description: "O ingresso está pronto para download",
+      });
+    } catch (error) {
+      console.error("Error generating ticket:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível gerar o ingresso",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
@@ -140,7 +227,7 @@ const Dashboard = () => {
   }
 
   const totalOrders = orders?.length || 0;
-  const totalRevenue = orders?.reduce((sum, order) => sum + Number(order.amount), 0) || 0;
+  const totalRevenue = orders?.filter(order => order.status === 'paid').reduce((sum, order) => sum + Number(order.amount), 0) || 0;
   const totalConfirmed = orders?.filter(o => o.confirmed_presence).length || 0;
 
   return (
@@ -272,23 +359,53 @@ const Dashboard = () => {
                         {format(new Date(order.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
                       </TableCell>
                       <TableCell>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 flex-wrap">
                           {order.status === "pending" && (
+                            <>
+                              <Button
+                                size="sm"
+                                onClick={() => handleMarkAsPaid(order.id)}
+                              >
+                                Marcar Pago
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => handleCancelOrder(order.id)}
+                              >
+                                Cancelar
+                              </Button>
+                            </>
+                          )}
+                          {order.status === "cancelled" && (
                             <Button
                               size="sm"
-                              onClick={() => handleMarkAsPaid(order.id)}
+                              variant="destructive"
+                              onClick={() => handleDeleteOrder(order.id)}
                             >
-                              Marcar Pago
+                              <Trash2 className="h-4 w-4 mr-1" />
+                              Excluir
                             </Button>
                           )}
-                          {order.status === "paid" && !order.confirmed_presence && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleConfirmPresence(order.id)}
-                            >
-                              Confirmar Presença
-                            </Button>
+                          {order.status === "paid" && (
+                            <>
+                              <Button
+                                size="sm"
+                                variant="default"
+                                onClick={() => handleGenerateTicket(order)}
+                              >
+                                Gerar Ingresso
+                              </Button>
+                              {!order.confirmed_presence && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleConfirmPresence(order.id)}
+                                >
+                                  Confirmar Presença
+                                </Button>
+                              )}
+                            </>
                           )}
                           {order.confirmed_presence && (
                             <Badge variant="outline" className="text-green-600">
@@ -316,6 +433,18 @@ const Dashboard = () => {
           <EventsManagement />
         </div>
       </main>
+
+      {/* Modal de Geração de Ingresso */}
+      <Dialog open={isTicketModalOpen} onOpenChange={setIsTicketModalOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Gerar Ingresso</DialogTitle>
+          </DialogHeader>
+          {selectedTicket && (
+            <TicketGenerator ticketData={selectedTicket} />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

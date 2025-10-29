@@ -170,6 +170,9 @@ export const CreateEventForm = ({ onSuccess, onCancel }: CreateEventFormProps) =
               onChange={(e) => handleInputChange("date", e.target.value)}
               required
             />
+            <p className="text-xs text-muted-foreground">
+              Formato: Dia/Mês/Ano Hora:Minuto
+            </p>
           </div>
 
           {/* Local */}
