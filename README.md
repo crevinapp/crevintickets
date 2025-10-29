@@ -49,6 +49,19 @@ npm run dev
 
 A aplicação estará disponível em `http://localhost:8080`
 
+## 🚀 Deploy Automático
+
+Este projeto está configurado com deploy automático no Vercel:
+
+- ✅ **GitHub Actions**: Configurado para deploy automático
+- ✅ **Vercel Integration**: Deploy em cada push para `master`
+- ✅ **Environment Variables**: Configuradas no Vercel Dashboard
+- ✅ **Production Ready**: Otimizado para produção
+
+### Variáveis de Ambiente no Vercel:
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY`
+
 The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
 
 Follow these steps:
