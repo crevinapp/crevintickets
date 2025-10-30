@@ -40,16 +40,42 @@ const Dashboard = () => {
 
   useEffect(() => {
     checkAuth();
-  }, []);
+    
+    // Listener para mudanças no estado de autenticação
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT' || !session) {
+        setIsAuthenticated(false);
+        navigate("/admin");
+      } else if (event === 'SIGNED_IN' || session) {
+        setIsAuthenticated(true);
+        setIsLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
 
   const checkAuth = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error('Erro ao verificar sessão:', error);
+        navigate("/admin");
+        return;
+      }
+      
+      if (!session) {
+        navigate("/admin");
+        return;
+      }
+      
+      setIsAuthenticated(true);
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Erro na verificação de autenticação:', error);
       navigate("/admin");
-      return;
     }
-    setIsAuthenticated(true);
-    setIsLoading(false);
   };
 
   const { data: orders } = useQuery({
