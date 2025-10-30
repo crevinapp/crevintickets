@@ -5,13 +5,20 @@ import type { Database } from './types';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
+// Clear any existing auth tokens to prevent refresh errors
+if (typeof window !== 'undefined') {
+  localStorage.removeItem('sb-fqiflmkypcrqavlipjlg-auth-token');
+  localStorage.clear();
+}
+
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
     storage: localStorage,
-    persistSession: true,
-    autoRefreshToken: true,
+    persistSession: false,
+    autoRefreshToken: false,
+    detectSessionInUrl: false,
   }
 });
