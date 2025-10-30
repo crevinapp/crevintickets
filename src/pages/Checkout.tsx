@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,7 +6,7 @@ import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Loader2, CheckCircle, Copy, MessageCircle } from "lucide-react";
+import { Loader2, CheckCircle, Copy, MessageCircle, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const Checkout = () => {
@@ -14,6 +14,33 @@ const Checkout = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(60); // 1 minuto em segundos
+  const [showThankYou, setShowThankYou] = useState(false);
+
+  // Cronômetro de 2 minutos
+  useEffect(() => {
+    if (timeLeft <= 0) {
+      setShowThankYou(true);
+      // Redirecionar após 3 segundos mostrando a mensagem de agradecimento
+      setTimeout(() => {
+        navigate("/");
+      }, 3000);
+      return;
+    }
+
+    const timer = setInterval(() => {
+      setTimeLeft(prev => prev - 1);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [timeLeft, navigate]);
+
+  // Formatar tempo para exibição (mm:ss)
+  const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
 
   const { data: order, isLoading } = useQuery({
     queryKey: ["order", orderId],
@@ -86,6 +113,31 @@ const Checkout = () => {
     );
   }
 
+  // Tela de agradecimento quando o tempo esgota
+  if (showThankYou) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="container px-4 py-12">
+          <div className="max-w-2xl mx-auto text-center">
+            <div className="mb-6 flex justify-center">
+              <div className="rounded-full bg-blue-100 p-6">
+                <Clock className="h-16 w-16 text-blue-600" />
+              </div>
+            </div>
+            <h1 className="text-3xl font-bold mb-4">Obrigado!</h1>
+            <p className="text-xl text-muted-foreground mb-8">
+              O tempo para escaneamento do QR Code expirou. Você será redirecionado para a página de eventos.
+            </p>
+            <div className="text-sm text-muted-foreground">
+              Redirecionando em alguns segundos...
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   if (order.status === "paid") {
     return (
       <div className="min-h-screen bg-background">
@@ -116,7 +168,30 @@ const Checkout = () => {
       
       <main className="container px-4 py-12">
         <div className="max-w-2xl mx-auto">
-          <h1 className="text-3xl font-bold mb-8 text-center">Finalize seu pagamento</h1>
+          <h1 className="text-3xl font-bold mb-4 text-center">Finalize seu pagamento</h1>
+          
+          {/* Cronômetro */}
+          <div className="mb-6">
+            <Card className="p-4 bg-gradient-to-r from-red-50 to-orange-50 border-red-200">
+              <div className="flex items-center justify-center gap-3">
+                <Clock className="h-6 w-6 text-red-600" />
+                <div className="text-center">
+                  <p className="text-sm text-red-700 font-medium">Tempo restante para pagamento</p>
+                  <p className="text-2xl font-bold text-red-600 font-mono">
+                    {formatTime(timeLeft)}
+                  </p>
+                </div>
+              </div>
+              <div className="mt-3">
+                <div className="w-full bg-red-200 rounded-full h-2">
+                  <div 
+                    className="bg-red-600 h-2 rounded-full transition-all duration-1000 ease-linear"
+                    style={{ width: `${(timeLeft / 60) * 100}%` }}
+                  ></div>
+                </div>
+              </div>
+            </Card>
+          </div>
 
           <Card className="p-6 mb-6">
             <h2 className="text-xl font-bold mb-4">Resumo do pedido</h2>
