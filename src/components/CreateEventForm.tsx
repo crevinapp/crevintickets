@@ -8,6 +8,7 @@ import { CalendarIcon, MapPinIcon, UsersIcon, DollarSignIcon, ImageIcon } from "
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { ImageUpload } from "@/components/ui/image-upload";
 
 interface CreateEventFormProps {
   onSuccess?: () => void;
@@ -227,18 +228,13 @@ export const CreateEventForm = ({ onSuccess, onCancel }: CreateEventFormProps) =
             </div>
           </div>
 
-          {/* URL da Imagem */}
+          {/* Imagem do Evento */}
           <div className="space-y-2">
-            <Label htmlFor="image_url" className="text-sm font-medium flex items-center gap-2">
-              <ImageIcon className="h-4 w-4" />
-              URL da Imagem (opcional)
-            </Label>
-            <Input
-              id="image_url"
-              type="url"
-              placeholder="https://exemplo.com/imagem.jpg"
+            <ImageUpload
+              label="Imagem do Evento (opcional)"
               value={formData.image_url}
-              onChange={(e) => handleInputChange("image_url", e.target.value)}
+              onChange={(url) => handleInputChange("image_url", url)}
+              placeholder="Cole a URL da imagem ou faça upload de uma imagem"
             />
           </div>
 

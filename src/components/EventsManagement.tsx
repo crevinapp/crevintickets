@@ -37,6 +37,7 @@ import { Edit, Trash2, Calendar, MapPin, Users, DollarSign, Search } from "lucid
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { ImageUpload } from "@/components/ui/image-upload";
 
 interface Event {
   id: string;
@@ -375,13 +376,15 @@ export const EventsManagement = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="edit-image">URL da Imagem</Label>
-                <Input
-                  id="edit-image"
-                  type="url"
+                <ImageUpload
+                  label="Imagem do Evento"
                   value={editingEvent.image_url || ""}
-                  onChange={(e) => setEditingEvent({ ...editingEvent, image_url: e.target.value })}
+                  onChange={(url) => setEditingEvent({ ...editingEvent, image_url: url })}
+                  placeholder="Cole a URL da imagem ou faça upload de uma imagem"
                 />
+                <p className="text-xs text-muted-foreground">
+                  Você pode colar uma URL de imagem ou fazer upload de uma imagem do seu dispositivo
+                </p>
               </div>
 
               <div className="flex justify-end gap-3 pt-4">
