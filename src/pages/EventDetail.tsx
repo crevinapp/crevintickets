@@ -66,6 +66,7 @@ const EventDetail = () => {
           buyer_name: buyerName,
           buyer_email: buyerEmail,
           quantity: quantity,
+          amount: totalAmount,
           total_amount: totalAmount,
           pix_payload: pixData.pixPayload,
           pix_qr_dataurl: pixData.qrCodeDataUrl,
