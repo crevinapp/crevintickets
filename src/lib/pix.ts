@@ -134,8 +134,8 @@ export async function generatePixData(
   amount: number,
   eventTitle: string
 ): Promise<{ pixPayload: string; qrCodeDataUrl: string; txid: string }> {
-  // Código PIX específico fornecido
-  const specificPixCode = "00020126360014BR.GOV.BCB.PIX0114+55619967100185204000053039865802BR5901N6001C62130509PGTCREVIN6304CD39";
+  // Código PIX específico com novo email crevinrcc@gmail.com
+  const specificPixCode = "00020101021226410014BR.GOV.BCB.PIX0119crevinrcc@gmail.com5204000053039865802BR5920CREVIN LAR DE IDOSOS6008BRASILIA62130509PGTCREVIN6304CA60";
   
   // Usar o código PIX específico fornecido
   return await generatePixDataFromCode(specificPixCode);

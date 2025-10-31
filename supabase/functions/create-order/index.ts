@@ -138,7 +138,7 @@ serve(async (req) => {
     const txid = `CREVIN${Date.now()}${Math.random().toString(36).substring(7)}`.substring(0, 25);
 
     // PIX configuration
-    const pixKey = "61996710018"; // Phone number without formatting
+    const pixKey = "crevinrcc@gmail.com"; // Email PIX key
     const merchantName = "CREVIN LAR DE IDOSOS";
     const merchantCity = "BRASILIA";
 
