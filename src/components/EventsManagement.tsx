@@ -47,6 +47,7 @@ interface Event {
   location: string;
   price: number;
   capacity: number;
+  available_spots?: number;
   image_url?: string;
   created_at: string;
 }
@@ -64,7 +65,7 @@ export const EventsManagement = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("events")
-        .select("*")
+        .select("*, available_spots")
         .order("date", { ascending: false });
       
       if (error) throw error;
@@ -187,6 +188,7 @@ export const EventsManagement = () => {
               <TableHead>Local</TableHead>
               <TableHead>Preço</TableHead>
               <TableHead>Capacidade</TableHead>
+              <TableHead>Ingressos Restantes</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Ações</TableHead>
             </TableRow>
@@ -194,7 +196,7 @@ export const EventsManagement = () => {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8">
+                <TableCell colSpan={8} className="text-center py-8">
                   Carregando eventos...
                 </TableCell>
               </TableRow>
@@ -243,6 +245,16 @@ export const EventsManagement = () => {
                       </div>
                     </TableCell>
                     <TableCell>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-blue-600">
+                          {event.available_spots ?? event.capacity}
+                        </span>
+                        <span className="text-sm text-muted-foreground">
+                          / {event.capacity}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
                       <Badge variant={status.variant}>
                         {status.label}
                       </Badge>
@@ -288,7 +300,7 @@ export const EventsManagement = () => {
               })
             ) : (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                   {searchTerm ? "Nenhum evento encontrado para a busca" : "Nenhum evento criado ainda"}
                 </TableCell>
               </TableRow>
