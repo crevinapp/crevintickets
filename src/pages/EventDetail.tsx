@@ -49,6 +49,17 @@ const EventDetail = () => {
       return;
     }
 
+    // Verificar se há vagas suficientes
+    const availableSpots = event.available_spots || event.capacity;
+    if (quantity > availableSpots) {
+      toast({
+        title: "Erro",
+        description: `Apenas ${availableSpots} vagas disponíveis`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsProcessing(true);
 
     try {
@@ -154,7 +165,7 @@ const EventDetail = () => {
             </div>
             <div className="flex items-center gap-3">
               <Users className="h-5 w-5 text-primary" />
-              <span>{event.capacity} vagas disponíveis</span>
+              <span>{event.available_spots || event.capacity} vagas disponíveis</span>
             </div>
           </div>
 
@@ -195,11 +206,14 @@ const EventDetail = () => {
                   id="quantity"
                   type="number"
                   min="1"
-                  max={event.capacity}
+                  max={event.available_spots || event.capacity}
                   value={quantity}
                   onChange={(e) => setQuantity(parseInt(e.target.value))}
                   required
                 />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Máximo: {event.available_spots || event.capacity} ingressos disponíveis
+                </p>
               </div>
 
               <div className="pt-4 border-t">

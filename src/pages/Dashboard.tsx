@@ -116,24 +116,67 @@ const Dashboard = () => {
   };
 
   const handleMarkAsPaid = async (orderId: string) => {
-    const { error } = await supabase
-      .from("orders")
-      .update({ status: "paid" })
-      .eq("id", orderId);
+    try {
+      // Primeiro, buscar os detalhes do pedido
+      const { data: order, error: orderError } = await supabase
+        .from("orders")
+        .select("*, events(*)")
+        .eq("id", orderId)
+        .single();
 
-    if (error) {
+      if (orderError || !order) {
+        throw new Error("Pedido não encontrado");
+      }
+
+      // Verificar se há vagas suficientes
+      const currentAvailableSpots = order.events?.available_spots || order.events?.capacity || 0;
+      if (currentAvailableSpots < order.quantity) {
+        toast({
+          title: "Erro",
+          description: `Não há vagas suficientes. Disponível: ${currentAvailableSpots}, Solicitado: ${order.quantity}`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Atualizar o status do pedido para "paid"
+      const { error: updateOrderError } = await supabase
+        .from("orders")
+        .update({ status: "paid" })
+        .eq("id", orderId);
+
+      if (updateOrderError) {
+        throw updateOrderError;
+      }
+
+      // Diminuir as vagas disponíveis no evento
+      const newAvailableSpots = currentAvailableSpots - order.quantity;
+      const { error: updateEventError } = await supabase
+        .from("events")
+        .update({ available_spots: newAvailableSpots })
+        .eq("id", order.event_id);
+
+      if (updateEventError) {
+        // Se falhar ao atualizar o evento, reverter o status do pedido
+        await supabase
+          .from("orders")
+          .update({ status: "pending" })
+          .eq("id", orderId);
+        throw updateEventError;
+      }
+
+      toast({
+        title: "Pedido atualizado!",
+        description: `O pedido foi marcado como pago. Vagas restantes: ${newAvailableSpots}`,
+      });
+    } catch (error) {
+      console.error("Erro ao marcar pedido como pago:", error);
       toast({
         title: "Erro",
         description: "Não foi possível atualizar o pedido",
         variant: "destructive",
       });
-      return;
     }
-
-    toast({
-      title: "Pedido atualizado!",
-      description: "O pedido foi marcado como pago",
-    });
   };
 
   const handleConfirmPresence = async (orderId: string) => {
@@ -158,24 +201,65 @@ const Dashboard = () => {
   };
 
   const handleCancelOrder = async (orderId: string) => {
-    const { error } = await supabase
-      .from("orders")
-      .update({ status: "cancelled" })
-      .eq("id", orderId);
+    try {
+      // Primeiro, buscar os detalhes do pedido
+      const { data: order, error: orderError } = await supabase
+        .from("orders")
+        .select("*, events(*)")
+        .eq("id", orderId)
+        .single();
 
-    if (error) {
+      if (orderError || !order) {
+        throw new Error("Pedido não encontrado");
+      }
+
+      // Atualizar o status do pedido para "cancelled"
+      const { error: updateOrderError } = await supabase
+        .from("orders")
+        .update({ status: "cancelled" })
+        .eq("id", orderId);
+
+      if (updateOrderError) {
+        throw updateOrderError;
+      }
+
+      // Se o pedido estava pago, devolver as vagas
+      if (order.status === "paid") {
+        const currentAvailableSpots = order.events?.available_spots || 0;
+        const newAvailableSpots = currentAvailableSpots + order.quantity;
+        
+        const { error: updateEventError } = await supabase
+          .from("events")
+          .update({ available_spots: newAvailableSpots })
+          .eq("id", order.event_id);
+
+        if (updateEventError) {
+          // Se falhar ao atualizar o evento, reverter o status do pedido
+          await supabase
+            .from("orders")
+            .update({ status: "paid" })
+            .eq("id", orderId);
+          throw updateEventError;
+        }
+
+        toast({
+          title: "Pedido cancelado!",
+          description: `O pedido foi cancelado e ${order.quantity} vagas foram devolvidas. Vagas disponíveis: ${newAvailableSpots}`,
+        });
+      } else {
+        toast({
+          title: "Pedido cancelado!",
+          description: "O pedido foi cancelado com sucesso",
+        });
+      }
+    } catch (error) {
+      console.error("Erro ao cancelar pedido:", error);
       toast({
         title: "Erro",
         description: "Não foi possível cancelar o pedido",
         variant: "destructive",
       });
-      return;
     }
-
-    toast({
-      title: "Pedido cancelado!",
-      description: "O pedido foi cancelado com sucesso",
-    });
   };
 
   const handleDeleteOrder = async (orderId: string) => {

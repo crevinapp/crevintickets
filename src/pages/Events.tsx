@@ -10,7 +10,7 @@ const Events = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("events")
-        .select("*")
+        .select("*, available_spots")
         .order("date", { ascending: true });
       
       if (error) throw error;
@@ -48,6 +48,7 @@ const Events = () => {
                 location={event.location}
                 price={Number(event.price)}
                 capacity={event.capacity}
+                available_spots={event.available_spots}
                 imageUrl={event.image_url || undefined}
               />
             ))}

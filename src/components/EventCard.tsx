@@ -13,6 +13,7 @@ interface EventCardProps {
   location: string;
   price: number;
   capacity: number;
+  available_spots?: number;
   imageUrl?: string;
 }
 
@@ -24,6 +25,7 @@ export const EventCard = ({
   location,
   price,
   capacity,
+  available_spots,
   imageUrl,
 }: EventCardProps) => {
   return (
@@ -57,7 +59,7 @@ export const EventCard = ({
           </div>
           <div className="flex items-center gap-2 text-sm">
             <Users className="h-4 w-4 text-primary" />
-            <span>{capacity} vagas</span>
+            <span>{available_spots !== undefined ? available_spots : capacity} vagas</span>
           </div>
         </div>
         
