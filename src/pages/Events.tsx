@@ -6,17 +6,24 @@ import { Loader2 } from "lucide-react";
 
 const Events = () => {
   const { data: events, isLoading } = useQuery({
-    queryKey: ["events"],
+    queryKey: ["events", "upcoming"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("events")
         .select("*, available_spots")
+        // Somente eventos vigentes (data maior ou igual ao momento atual)
+        .gte("date", new Date().toISOString())
         .order("date", { ascending: true });
       
       if (error) throw error;
       return data;
     },
   });
+
+  // Filtro adicional no cliente para garantir ocultação de eventos passados
+  const upcomingEvents = (events ?? []).filter(
+    (event) => new Date(event.date) >= new Date()
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -36,9 +43,9 @@ const Events = () => {
           <div className="flex justify-center items-center py-20">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
-        ) : events && events.length > 0 ? (
+        ) : upcomingEvents && upcomingEvents.length > 0 ? (
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-            {events.map((event) => (
+            {upcomingEvents.map((event) => (
               <EventCard
                 key={event.id}
                 id={event.id}

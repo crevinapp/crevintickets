@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -52,6 +52,12 @@ interface Event {
   created_at: string;
 }
 
+interface OrderSummary {
+  event_id: string;
+  amount: number;
+  status: string;
+}
+
 export const EventsManagement = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -72,6 +78,28 @@ export const EventsManagement = () => {
       return data as Event[];
     },
   });
+
+  // Buscar pedidos pagos para calcular valor vendido por evento
+  const { data: paidOrders } = useQuery({
+    queryKey: ["orders", "paid-summary"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("orders")
+        .select("event_id, amount, status")
+        .eq("status", "paid");
+      if (error) throw error;
+      return data as OrderSummary[];
+    },
+  });
+
+  const revenueByEvent = useMemo(() => {
+    const map: Record<string, number> = {};
+    (paidOrders ?? []).forEach((order) => {
+      const amount = Number(order.amount) || 0;
+      map[order.event_id] = (map[order.event_id] ?? 0) + amount;
+    });
+    return map;
+  }, [paidOrders]);
 
   const filteredEvents = events?.filter(event =>
     event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -189,6 +217,7 @@ export const EventsManagement = () => {
               <TableHead>Preço</TableHead>
               <TableHead>Capacidade</TableHead>
               <TableHead>Ingressos Restantes</TableHead>
+              <TableHead>Valor Vendido</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Ações</TableHead>
             </TableRow>
@@ -196,7 +225,7 @@ export const EventsManagement = () => {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-8">
+                <TableCell colSpan={9} className="text-center py-8">
                   Carregando eventos...
                 </TableCell>
               </TableRow>
@@ -255,6 +284,17 @@ export const EventsManagement = () => {
                       </div>
                     </TableCell>
                     <TableCell>
+                      <div className="flex items-center gap-2">
+                        <DollarSign className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">
+                          {new Intl.NumberFormat('pt-BR', {
+                            style: 'currency',
+                            currency: 'BRL',
+                          }).format(revenueByEvent[event.id] ?? 0)}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
                       <Badge variant={status.variant}>
                         {status.label}
                       </Badge>
@@ -300,7 +340,7 @@ export const EventsManagement = () => {
               })
             ) : (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                   {searchTerm ? "Nenhum evento encontrado para a busca" : "Nenhum evento criado ainda"}
                 </TableCell>
               </TableRow>
